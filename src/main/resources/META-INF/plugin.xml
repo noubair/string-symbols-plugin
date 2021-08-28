@@ -16,4 +16,13 @@
         <listener class="org.jetbrains.plugins.template.listeners.MyProjectManagerListener"
                   topic="com.intellij.openapi.project.ProjectManagerListener"/>
     </applicationListeners>
+    <actions>
+        <action
+                id="StackOverflow.AskQuestion.ToolsMenu"
+                class="org.jetbrains.plugins.template.services.AskQuestionAction"
+                text="Ask Question on Stack Overflow"
+                description="Ask a Question on Stack Overflow">
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+        </action>
+    </actions>
 </idea-plugin>
