@@ -14,23 +14,54 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
-import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.search.PsiSearchHelper
-import com.intellij.psi.search.SearchRequestQuery
+import com.intellij.psi.impl.PsiFileEx
+import com.intellij.psi.impl.PsiManagerEx
+import com.intellij.psi.impl.cache.CacheManager
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReferenceHelper
+import com.intellij.psi.search.*
 import com.intellij.psi.search.searches.ReferenceSearcher
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.search.searches.ReferencesSearch.search
+import com.intellij.psi.util.findDescendantOfType
 import com.intellij.ui.layout.panel
 import com.intellij.usages.Usage
+import org.jetbrains.uast.test.env.findUElementByTextFromPsi
 import javax.swing.JButton
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.JTextField
+//import com.intellij.psi.PsiJavaFile
 
 
 class StringSymbolsAction : AnAction()  {
     override fun actionPerformed(e: AnActionEvent) {
+        navigateToMethodFromString(e)
+    }
+
+    fun navigateToMethodFromString(e: AnActionEvent){
+        //TODO: if many results, filter by candidate
+        val editor: Editor = e.getRequiredData(CommonDataKeys.EDITOR)
+        val virtualFile = FileEditorManager.getInstance(e.project!!).selectedFiles.get(0)
+        val file = PsiManager.getInstance(e.project!!).findFile(virtualFile) //TODO: use anActionEvent.getData(CommonDataKeys.PSI_FILE);
+        val element = file!!.findElementAt(editor.caretModel.offset)!!
+        val myManager = PsiManagerEx.getInstanceEx(e.project);
+        val word = element.text.replace("\"", "").replace("'", "")
+        val methodFile = CacheManager.getInstance(myManager.getProject()).getFilesWithWord(
+            word, UsageSearchContext.IN_CODE,
+            GlobalSearchScope.projectScope(myManager.getProject()),
+            true
+        ).get(0)
+
+        //TODO: handle the possibility of multiple classes
+        methodFile.findDescendantOfType<PsiElement>()
+        val menuContent =  methodFile.toString();
+        val myPopup = MyPopup(menuContent)
+        myPopup.show()
+    }
+
+    fun other(e: AnActionEvent){
         val editor: Editor = e.getRequiredData(CommonDataKeys.EDITOR)
         val caretModel: CaretModel = editor.caretModel
         caretModel.currentCaret.selectWordAtCaret(true)
@@ -38,7 +69,7 @@ class StringSymbolsAction : AnAction()  {
         val virtualFile = FileEditorManager.getInstance(e.project!!).selectedFiles.get(0)
         val file = PsiManager.getInstance(e.project!!).findFile(virtualFile)
         val element = file!!.findElementAt(editor.caretModel.offset)
-        val usages = ReferencesSearch.search(element!!).findAll()
+        val usages = ReferencesSearch.search(element!!.parent!!).findAll()
         val myPopup = MyPopup(word!!)
         myPopup.show()
     }
