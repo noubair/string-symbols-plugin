@@ -15,6 +15,7 @@ import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.impl.cache.CacheManager
+import com.intellij.psi.impl.source.tree.java.PsiJavaTokenImpl
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.UsageSearchContext
 import com.intellij.psi.search.searches.ReferencesSearch
@@ -36,29 +37,35 @@ class StringSymbolsAction : AnAction()  {
         val file = PsiManager.getInstance(e.project!!)
             .findFile(virtualFile) //TODO: use anActionEvent.getData(CommonDataKeys.PSI_FILE);
         val element = file!!.findElementAt(editor.caretModel.offset)!!
-        val myManager = PsiManagerEx.getInstanceEx(e.project);
-        val word = element.text.replace("\"", "").replace("'", "")
-        val methodFiles: List<PsiJavaFile> = CacheManager.getInstance(myManager.getProject()).getFilesWithWord(
-            word, UsageSearchContext.IN_CODE,
-            GlobalSearchScope.projectScope(myManager.getProject()),
-            true
-        ).map { psiFile -> psiFile as PsiJavaFile }
+        if (element is  PsiJavaTokenImpl && "STRING_LITERAL".equals(element.elementType.toString())){ //TODO: not a reliable condition?
+            val myManager = PsiManagerEx.getInstanceEx(e.project);
+            val word = element.text.replace("\"", "").replace("'", "")
+            val methodFiles: List<PsiJavaFile> = CacheManager.getInstance(myManager.getProject()).getFilesWithWord(
+                word, UsageSearchContext.IN_CODE,
+                GlobalSearchScope.projectScope(myManager.getProject()),
+                true
+            ).map { psiFile -> psiFile as PsiJavaFile }
 
 
-        //TODO: handle the possibility of multiple classes
-        val candidateMethods = arrayListOf<PsiElement>()
-        methodFiles.forEach { javaFile ->
-            javaFile.classes.forEach { aClass ->
-                aClass.methods.forEach { aMethod ->
-                    candidateMethods.add(
-                        aMethod
-                    )
+            //TODO: handle the possibility of multiple classes
+            val candidateMethods = arrayListOf<PsiElement>()
+            methodFiles.forEach { javaFile ->
+                javaFile.classes.forEach { aClass ->
+                    aClass.methods.forEach { aMethod ->
+                        candidateMethods.add(
+                            aMethod
+                        )
+                    }
                 }
             }
-        }
 
-        NavigationUtil.getPsiElementPopup(candidateMethods.toTypedArray(), DefaultPsiElementCellRenderer(), "Choose Definition")
+            NavigationUtil.getPsiElementPopup(
+                candidateMethods.toTypedArray(),
+                DefaultPsiElementCellRenderer(),
+                "Choose Definition"
+            )
                 .showInBestPositionFor(editor)
+        }
 
     }
 
