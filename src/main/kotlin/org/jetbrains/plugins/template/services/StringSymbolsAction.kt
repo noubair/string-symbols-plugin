@@ -18,6 +18,8 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.SearchRequestQuery
+import com.intellij.psi.search.searches.ReferenceSearcher
+import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.search.searches.ReferencesSearch.search
 import com.intellij.ui.layout.panel
 import com.intellij.usages.Usage
@@ -33,6 +35,10 @@ class StringSymbolsAction : AnAction()  {
         val caretModel: CaretModel = editor.caretModel
         caretModel.currentCaret.selectWordAtCaret(true)
         val word = caretModel.currentCaret.selectedText
+        val virtualFile = FileEditorManager.getInstance(e.project!!).selectedFiles.get(0)
+        val file = PsiManager.getInstance(e.project!!).findFile(virtualFile)
+        val element = file!!.findElementAt(editor.caretModel.offset)
+        val usages = ReferencesSearch.search(element!!).findAll()
         val myPopup = MyPopup(word!!)
         myPopup.show()
     }
