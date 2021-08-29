@@ -29,17 +29,12 @@ import javax.swing.JTextField
 
 class StringSymbolsAction : AnAction()  {
     override fun actionPerformed(e: AnActionEvent) {
-        val test = StringSymbolsActionTest()
-        test.t2(e)
         val editor: Editor = e.getRequiredData(CommonDataKeys.EDITOR)
-        val caretModel: CaretModel = editor.getCaretModel()
+        val caretModel: CaretModel = editor.caretModel
         caretModel.currentCaret.selectWordAtCaret(true)
-        val virtualFile = FileEditorManager.getInstance(e.project!!).selectedFiles.get(0)
-        val file = PsiManager.getInstance(e.project!!).findFile(virtualFile)
-        var element = file!!.findElementAt( e.getRequiredData(CommonDataKeys.EDITOR).getCaretModel().getOffset())
-        val myPopup = MyPopup(search(element!!, GlobalSearchScope.projectScope(e.project!!)).findFirst().toString())
+        val word = caretModel.currentCaret.selectedText
+        val myPopup = MyPopup(word!!)
         myPopup.show()
-
     }
 }
 

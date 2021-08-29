@@ -18,11 +18,12 @@
     </applicationListeners>
     <actions>
         <action
-                id="StackOverflow.AskQuestion.ToolsMenu"
+                id="StringReferences.EditorPopupMenu"
                 class="org.jetbrains.plugins.template.services.StringSymbolsAction"
-                text="Ask Question on Stack Overflow"
-                description="Ask a Question on Stack Overflow">
+                text="Find String References"
+                description="Find string references">
             <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt e"/>
         </action>
     </actions>
 </idea-plugin>
