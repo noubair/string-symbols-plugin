@@ -1,0 +1,14 @@
+val myManager = PsiManagerEx.getInstanceEx(e.project);
+CacheManager.getInstance(myManager.getProject()).getFilesWithWord(
+    "void", UsageSearchContext.IN_PLAIN_TEXT,
+    GlobalSearchScope.projectScope(myManager.getProject()),
+    true
+);
+
+//PsiSearchHelper.getInstance(e.project!!).findFilesWithPlainTextWords("\"updateIndicator\"")
+val myManager = PsiManagerEx.getInstanceEx(e.project);
+CacheManager.getInstance(myManager.getProject()).getFilesWithWord(
+    "updateIndicator", UsageSearchContext.IN_STRINGS,
+    GlobalSearchScope.projectScope(myManager.getProject()),
+    true
+);
