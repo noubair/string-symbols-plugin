@@ -1,36 +1,52 @@
 package org.jetbrains.plugins.template.services
 
+import com.intellij.find.findUsages.CustomUsageSearcher
+import com.intellij.find.findUsages.FindUsagesOptions
+import com.intellij.find.usages.SymbolTextSearcher
 import com.intellij.ide.BrowserUtil
+import com.intellij.model.search.SearchService
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.editor.CaretModel
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiManager
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.PsiSearchHelper
+import com.intellij.psi.search.SearchRequestQuery
+import com.intellij.psi.search.searches.ReferencesSearch.search
 import com.intellij.ui.layout.panel
+import com.intellij.usages.Usage
 import javax.swing.JButton
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.JTextField
 
 
-class AskQuestionAction : AnAction()  {
+class StringSymbolsAction : AnAction()  {
     override fun actionPerformed(e: AnActionEvent) {
+        val test = StringSymbolsActionTest()
+        test.t2(e)
         val editor: Editor = e.getRequiredData(CommonDataKeys.EDITOR)
         val caretModel: CaretModel = editor.getCaretModel()
-        val selectedText = caretModel.currentCaret.selectedText
-//        BrowserUtil.browse("https://www.google.com/search?q=%s".format(selectedText))
-        val myPopup = DslPopup()
-        myPopup.showPopup()
+        caretModel.currentCaret.selectWordAtCaret(true)
+        val virtualFile = FileEditorManager.getInstance(e.project!!).selectedFiles.get(0)
+        val file = PsiManager.getInstance(e.project!!).findFile(virtualFile)
+        var element = file!!.findElementAt( e.getRequiredData(CommonDataKeys.EDITOR).getCaretModel().getOffset())
+        val myPopup = MyPopup(search(element!!, GlobalSearchScope.projectScope(e.project!!)).findFirst().toString())
+        myPopup.show()
 
     }
 }
 
 
-class MyPopup {
+class MyPopup(labelString: String) {
     val content = JPanel().apply {
-        val label = JLabel("My Label")
+        val label = JLabel(labelString)
         add(label)
 
         val bt = JButton("ok")
@@ -38,7 +54,7 @@ class MyPopup {
             println("clicked ok")
             dispose()
         }
-        add(bt)
+//        add(bt)
     }
     val popup = JBPopupFactory.getInstance()
         .createComponentPopupBuilder(content, null)
