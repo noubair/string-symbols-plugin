@@ -24,9 +24,6 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.JTextField
 
-//import com.intellij.psi.PsiJavaFile
-
-
 class StringSymbolsAction : AnAction()  {
     override fun actionPerformed(e: AnActionEvent) {
         navigateToMethodFromString(e)
@@ -59,16 +56,10 @@ class StringSymbolsAction : AnAction()  {
                 }
             }
         }
-        if (candidateMethods.size == 1)
-        { FileEditorManager.getInstance(e.project!!)
-            .openFile(candidateMethods[0].containingFile.virtualFile, true)
-        }
-        else {
-            NavigationUtil.getPsiElementPopup(candidateMethods.toTypedArray(), DefaultPsiElementCellRenderer(), "Title")
+
+        NavigationUtil.getPsiElementPopup(candidateMethods.toTypedArray(), DefaultPsiElementCellRenderer(), "Choose Definition")
                 .showInBestPositionFor(editor)
-//            val popup = MyPopup(candidateMethods)
-//            popup.show()
-        }
+
     }
 
     fun other(e: AnActionEvent){
@@ -82,62 +73,5 @@ class StringSymbolsAction : AnAction()  {
         val usages = ReferencesSearch.search(element!!.parent!!).findAll()
 //        val myPopup = MyPopup(word!!)
 //        myPopup.show()
-    }
-}
-
-
-class MyPopup(methods: List<PsiElement>) {
-    val content = JPanel().apply {
-        methods.forEach { method ->
-            val label = JLabel(method.text + "\n" )
-            add(label)
-        }
-
-        val bt = JButton("ok")
-        bt.addActionListener {
-            println("clicked ok")
-            dispose()
-        }
-//        add(bt)
-    }
-    val popup = JBPopupFactory.getInstance()
-        .createComponentPopupBuilder(content, null)
-        .createPopup()
-
-    fun dispose() {
-        popup.dispose()
-    }
-
-    fun show() {
-        popup.showInFocusCenter()
-
-    }
-}
-
-class DslPopup {
-    fun createPanel(): DialogPanel {
-        return panel {
-            noteRow("Login to get notified when the submitted\nexceptions are fixed.")
-            row("Username:") { JTextField() }
-            row("Password:") { textField({ "XXXXX" }, { println(it) }) }
-            row {
-                checkBox("AAA")
-                row {
-                    label("BBB")
-                    checkBox("CCC")
-                }
-                right {
-                    link("Forgot password?") { /* custom action */ }
-                }
-            }
-            noteRow("""Do not have an account? <a href="https://account.jetbrains.com/login">Sign Up</a>""")
-        }
-    }
-
-    fun showPopup() {
-        JBPopupFactory.getInstance()
-            .createComponentPopupBuilder(createPanel(), null)
-            .createPopup()
-            .showInFocusCenter()
     }
 }
