@@ -38,35 +38,43 @@ class StringSymbolsAction : AnAction()  {
             .findFile(virtualFile) //TODO: use anActionEvent.getData(CommonDataKeys.PSI_FILE);
         val element = file!!.findElementAt(editor.caretModel.offset)!!
         if (element is  PsiJavaTokenImpl && "STRING_LITERAL".equals(element.elementType.toString())){ //TODO: not a reliable condition?
-            val myManager = PsiManagerEx.getInstanceEx(e.project);
-            val word = element.text.replace("\"", "").replace("'", "")
-            val methodFiles: List<PsiJavaFile> = CacheManager.getInstance(myManager.getProject()).getFilesWithWord(
-                word, UsageSearchContext.IN_CODE,
-                GlobalSearchScope.projectScope(myManager.getProject()),
-                true
-            ).map { psiFile -> psiFile as PsiJavaFile }
-
-
-            //TODO: handle the possibility of multiple classes
-            val candidateMethods = arrayListOf<PsiElement>()
-            methodFiles.forEach { javaFile ->
-                javaFile.classes.forEach { aClass ->
-                    aClass.methods.forEach { aMethod ->
-                        candidateMethods.add(
-                            aMethod
-                        )
-                    }
-                }
-            }
-
-            NavigationUtil.getPsiElementPopup(
-                candidateMethods.toTypedArray(),
-                DefaultPsiElementCellRenderer(),
-                "Choose Definition"
-            )
-                .showInBestPositionFor(editor)
+            handleStringLiteral(e, element, editor)
         }
 
+    }
+
+    private fun handleStringLiteral(
+        e: AnActionEvent,
+        element: PsiJavaTokenImpl,
+        editor: Editor
+    ) {
+        val myManager = PsiManagerEx.getInstanceEx(e.project);
+        val word = element.text.replace("\"", "").replace("'", "")
+        val methodFiles: List<PsiJavaFile> = CacheManager.getInstance(myManager.getProject()).getFilesWithWord(
+            word, UsageSearchContext.IN_CODE,
+            GlobalSearchScope.projectScope(myManager.getProject()),
+            true
+        ).map { psiFile -> psiFile as PsiJavaFile }
+
+
+        //TODO: handle the possibility of multiple classes
+        val candidateMethods = arrayListOf<PsiElement>()
+        methodFiles.forEach { javaFile ->
+            javaFile.classes.forEach { aClass ->
+                aClass.methods.forEach { aMethod ->
+                    candidateMethods.add(
+                        aMethod
+                    )
+                }
+            }
+        }
+
+        NavigationUtil.getPsiElementPopup(
+            candidateMethods.toTypedArray(),
+            DefaultPsiElementCellRenderer(),
+            "Choose Definition"
+        )
+            .showInBestPositionFor(editor)
     }
 
     fun other(e: AnActionEvent){
