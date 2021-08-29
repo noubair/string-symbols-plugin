@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.PsiFileEx
 import com.intellij.psi.impl.PsiManagerEx
@@ -48,17 +49,17 @@ class StringSymbolsAction : AnAction()  {
         val element = file!!.findElementAt(editor.caretModel.offset)!!
         val myManager = PsiManagerEx.getInstanceEx(e.project);
         val word = element.text.replace("\"", "").replace("'", "")
-        val methodFile = CacheManager.getInstance(myManager.getProject()).getFilesWithWord(
+        val methodFile: PsiJavaFile = CacheManager.getInstance(myManager.getProject()).getFilesWithWord(
             word, UsageSearchContext.IN_CODE,
             GlobalSearchScope.projectScope(myManager.getProject()),
             true
-        ).get(0)
+        ).get(0) as PsiJavaFile
 
         //TODO: handle the possibility of multiple classes
         methodFile.findDescendantOfType<PsiElement>()
+        var method = methodFile.classes.get(0).findMethodsByName(word).get(0)
+        FileEditorManager.getInstance(e.project!!).openFile(methodFile.virtualFile, true)
         val menuContent =  methodFile.toString();
-        val myPopup = MyPopup(menuContent)
-        myPopup.show()
     }
 
     fun other(e: AnActionEvent){
