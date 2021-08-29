@@ -1,10 +1,5 @@
 package org.jetbrains.plugins.template.services
 
-import com.intellij.find.findUsages.CustomUsageSearcher
-import com.intellij.find.findUsages.FindUsagesOptions
-import com.intellij.find.usages.SymbolTextSearcher
-import com.intellij.ide.BrowserUtil
-import com.intellij.model.search.SearchService
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -14,25 +9,19 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiManager
-import com.intellij.psi.impl.PsiFileEx
 import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.impl.cache.CacheManager
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReferenceHelper
-import com.intellij.psi.search.*
-import com.intellij.psi.search.searches.ReferenceSearcher
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.UsageSearchContext
 import com.intellij.psi.search.searches.ReferencesSearch
-import com.intellij.psi.search.searches.ReferencesSearch.search
-import com.intellij.psi.util.findDescendantOfType
 import com.intellij.ui.layout.panel
-import com.intellij.usages.Usage
-import org.jetbrains.uast.test.env.findUElementByTextFromPsi
 import javax.swing.JButton
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.JTextField
+
 //import com.intellij.psi.PsiJavaFile
 
 
@@ -41,25 +30,41 @@ class StringSymbolsAction : AnAction()  {
         navigateToMethodFromString(e)
     }
 
-    fun navigateToMethodFromString(e: AnActionEvent){
+    fun navigateToMethodFromString(e: AnActionEvent) {
         //TODO: if many results, filter by candidate
         val editor: Editor = e.getRequiredData(CommonDataKeys.EDITOR)
         val virtualFile = FileEditorManager.getInstance(e.project!!).selectedFiles.get(0)
-        val file = PsiManager.getInstance(e.project!!).findFile(virtualFile) //TODO: use anActionEvent.getData(CommonDataKeys.PSI_FILE);
+        val file = PsiManager.getInstance(e.project!!)
+            .findFile(virtualFile) //TODO: use anActionEvent.getData(CommonDataKeys.PSI_FILE);
         val element = file!!.findElementAt(editor.caretModel.offset)!!
         val myManager = PsiManagerEx.getInstanceEx(e.project);
         val word = element.text.replace("\"", "").replace("'", "")
-        val methodFile: PsiJavaFile = CacheManager.getInstance(myManager.getProject()).getFilesWithWord(
+        val methodFiles: List<PsiJavaFile> = CacheManager.getInstance(myManager.getProject()).getFilesWithWord(
             word, UsageSearchContext.IN_CODE,
             GlobalSearchScope.projectScope(myManager.getProject()),
             true
-        ).get(0) as PsiJavaFile
+        ).map { psiFile -> psiFile as PsiJavaFile }
+
 
         //TODO: handle the possibility of multiple classes
-        methodFile.findDescendantOfType<PsiElement>()
-        var method = methodFile.classes.get(0).findMethodsByName(word).get(0)
-        FileEditorManager.getInstance(e.project!!).openFile(methodFile.virtualFile, true)
-        val menuContent =  methodFile.toString();
+        val candidateMethods = arrayListOf<PsiElement>()
+        methodFiles.forEach { javaFile ->
+            javaFile.classes.forEach { aClass ->
+                aClass.methods.forEach { aMethod ->
+                    candidateMethods.add(
+                        aMethod
+                    )
+                }
+            }
+        }
+        if (candidateMethods.size == 1)
+        { FileEditorManager.getInstance(e.project!!)
+            .openFile(candidateMethods[0].containingFile.virtualFile, true)
+        }
+        else {
+            val popup = MyPopup(candidateMethods)
+            popup.show()
+        }
     }
 
     fun other(e: AnActionEvent){
@@ -71,16 +76,18 @@ class StringSymbolsAction : AnAction()  {
         val file = PsiManager.getInstance(e.project!!).findFile(virtualFile)
         val element = file!!.findElementAt(editor.caretModel.offset)
         val usages = ReferencesSearch.search(element!!.parent!!).findAll()
-        val myPopup = MyPopup(word!!)
-        myPopup.show()
+//        val myPopup = MyPopup(word!!)
+//        myPopup.show()
     }
 }
 
 
-class MyPopup(labelString: String) {
+class MyPopup(methods: List<PsiElement>) {
     val content = JPanel().apply {
-        val label = JLabel(labelString)
-        add(label)
+        methods.forEach { method ->
+            val label = JLabel(method.text + "\n" )
+            add(label)
+        }
 
         val bt = JButton("ok")
         bt.addActionListener {
