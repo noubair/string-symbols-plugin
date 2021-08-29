@@ -1,5 +1,7 @@
 package org.jetbrains.plugins.template.services
 
+import com.intellij.codeInsight.navigation.NavigationUtil
+import com.intellij.ide.util.DefaultPsiElementCellRenderer
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -62,8 +64,10 @@ class StringSymbolsAction : AnAction()  {
             .openFile(candidateMethods[0].containingFile.virtualFile, true)
         }
         else {
-            val popup = MyPopup(candidateMethods)
-            popup.show()
+            NavigationUtil.getPsiElementPopup(candidateMethods.toTypedArray(), DefaultPsiElementCellRenderer(), "Title")
+                .showInBestPositionFor(editor)
+//            val popup = MyPopup(candidateMethods)
+//            popup.show()
         }
     }
 
