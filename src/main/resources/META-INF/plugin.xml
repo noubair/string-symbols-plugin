@@ -1,5 +1,5 @@
 <idea-plugin>
-    <id>org.jetbrains.plugins.template</id>
+    <id>com.github.noubair.stringsymbolsplugin</id>
     <name>StringSymbols</name>
     <vendor> email="noubair.matah1@gmail.com"</vendor>
 
@@ -9,18 +9,18 @@
     <depends>com.intellij.java</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-        <applicationService serviceImplementation="org.jetbrains.plugins.template.services.MyApplicationService"/>
-        <projectService serviceImplementation="org.jetbrains.plugins.template.services.MyProjectService"/>
+        <applicationService serviceImplementation="com.github.noubair.stringsymbolsplugin.services.MyApplicationService"/>
+        <projectService serviceImplementation="com.github.noubair.stringsymbolsplugin.services.MyProjectService"/>
     </extensions>
 
     <applicationListeners>
-        <listener class="org.jetbrains.plugins.template.listeners.MyProjectManagerListener"
+        <listener class="com.github.noubair.stringsymbolsplugin.listeners.MyProjectManagerListener"
                   topic="com.intellij.openapi.project.ProjectManagerListener"/>
     </applicationListeners>
     <actions>
         <action
                 id="StringReferences.EditorPopupMenu"
-                class="org.jetbrains.plugins.template.services.StringSymbolsAction"
+                class="com.github.noubair.stringsymbolsplugin.services.StringSymbolsAction"
                 text="Find String References"
                 description="Find string references">
             <add-to-group group-id="EditorPopupMenu" anchor="last"/>
