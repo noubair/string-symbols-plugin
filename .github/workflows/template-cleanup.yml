@@ -10,7 +10,7 @@ on:
 
 jobs:
 
-  # Run cleaning process only if workflow is triggered by the non-JetBrains/intellij-platform-plugin-template repository.
+  # Run cleaning process only if worfkflow is triggered by the non-JetBrains/intellij-platform-plugin-template repository.
   template-cleanup:
     name: Template Cleanup
     runs-on: ubuntu-latest
@@ -63,7 +63,7 @@ jobs:
             LICENSE
 
           # Run ktlint formatting
-          ./gradlew ktlintFormat
+#          ./gradlew ktlintFormat
 
       # Commit modified files
       - name: Commit files
