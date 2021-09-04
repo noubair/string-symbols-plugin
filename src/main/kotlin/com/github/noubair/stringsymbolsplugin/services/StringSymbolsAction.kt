@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.template.services
+package com.github.noubair.stringsymbolsplugin.services
 
 import com.intellij.codeInsight.navigation.NavigationUtil
 import com.intellij.ide.util.DefaultPsiElementCellRenderer
