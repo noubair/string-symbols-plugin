@@ -12,11 +12,11 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.cache.CacheManager
+import com.intellij.psi.impl.source.tree.PsiPlainTextImpl
 import com.intellij.psi.impl.source.tree.java.PsiIdentifierImpl
 import com.intellij.psi.impl.source.tree.java.PsiJavaTokenImpl
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.UsageSearchContext
-import org.jetbrains.uast.test.env.findUElementByTextFromPsi
 
 class StringSymbolsAction : AnAction()  {
     override fun actionPerformed(e: AnActionEvent) {
@@ -30,11 +30,46 @@ class StringSymbolsAction : AnAction()  {
         val file = PsiManager.getInstance(e.project!!)
             .findFile(virtualFile) //TODO: use anActionEvent.getData(CommonDataKeys.PSI_FILE);
         val element = file!!.findElementAt(editor.caretModel.offset)!!
-        if (element is  PsiJavaTokenImpl && JavaTokenType.STRING_LITERAL.toString() == element.elementType.toString()){ //TODO: not a reliable condition?
+        if (element is PsiJavaTokenImpl && JavaTokenType.STRING_LITERAL.toString() == element.elementType.toString()) { //TODO: not a reliable condition?
             handleStringLiteral(e, element, editor)
-        } else if (element is  PsiIdentifierImpl && JavaTokenType.IDENTIFIER.toString() ==  element.elementType.toString()){
+        } else if (element is PsiIdentifierImpl && JavaTokenType.IDENTIFIER.toString() == element.elementType.toString()) {
             handleMethodDefinition(element, e, editor)
+        } else if (element is PsiPlainTextImpl) {
+            handlePlainText(editor, element)
         }
+
+    }
+
+    private fun handlePlainText(
+        editor: Editor,
+        element: PsiPlainTextImpl
+    ) {
+        val offset = editor.caretModel.offset
+        var classNameCandidate = ""
+        var c = offset
+        while (isNotSpecialChar(element.text[c])) {
+            classNameCandidate = element.text[c] + classNameCandidate
+            c--
+        }
+        c = offset +1
+        while (isNotSpecialChar(element.text[c])) {
+            classNameCandidate += element.text[c]
+            c++
+        }
+        val camelCaseClassName = classNameCandidate.split(" ").stream()
+            .reduce { w1: String, w2: String -> w1.replaceFirstChar(Char::uppercase) + w2.replaceFirstChar(Char::uppercase) }
+            .get()
+        val filesWithClassName: List<PsiJavaFile> = CacheManager.getInstance(element.project).getFilesWithWord(
+            camelCaseClassName, UsageSearchContext.IN_CODE,
+            GlobalSearchScope.projectScope(element.project),
+            true
+        ).map { psiFile -> psiFile as PsiJavaFile }
+
+        NavigationUtil.getPsiElementPopup(
+            filesWithClassName.toTypedArray(),
+            DefaultPsiElementCellRenderer(),
+            "Choose Class Definition"
+        ).showInBestPositionFor(editor)
 
     }
 
@@ -83,14 +118,14 @@ class StringSymbolsAction : AnAction()  {
             javaFile.classes.forEach { aClass ->
                 aClass.methods
                     .filter {
-                        aMethod ->
+                            aMethod ->
                         aMethod.name == methodName
                     }
                     .forEach { aMethod ->
-                    candidatePsiMethods.add(
-                        aMethod
-                    )
-                }
+                        candidatePsiMethods.add(
+                            aMethod
+                        )
+                    }
             }
         }
         NavigationUtil.getPsiElementPopup(
@@ -99,4 +134,11 @@ class StringSymbolsAction : AnAction()  {
             "Choose Definition"
         ).showInBestPositionFor(editor)
     }
+
+
+    fun isNotSpecialChar(char: Char): Boolean {
+        return char.isLetter() || char.isDigit() || char.isWhitespace()
+    }
 }
+
+
