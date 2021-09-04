@@ -1,7 +1,7 @@
 <idea-plugin>
-    <id>org.jetbrains.plugins.template</id>
-    <name>Template</name>
-    <vendor>JetBrains</vendor>
+    <id>com.github.noubair.stringsymbolsplugin</id>
+    <name>string-symbols-plugin</name>
+    <vendor>noubair</vendor>
 
     <!-- Product and plugin compatibility requirements -->
     <!-- https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
@@ -9,18 +9,18 @@
     <depends>com.intellij.java</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-        <applicationService serviceImplementation="org.jetbrains.plugins.template.services.MyApplicationService"/>
-        <projectService serviceImplementation="org.jetbrains.plugins.template.services.MyProjectService"/>
+        <applicationService serviceImplementation="com.github.noubair.stringsymbolsplugin.services.MyApplicationService"/>
+        <projectService serviceImplementation="com.github.noubair.stringsymbolsplugin.services.MyProjectService"/>
     </extensions>
 
     <applicationListeners>
-        <listener class="org.jetbrains.plugins.template.listeners.MyProjectManagerListener"
+        <listener class="com.github.noubair.stringsymbolsplugin.listeners.MyProjectManagerListener"
                   topic="com.intellij.openapi.project.ProjectManagerListener"/>
     </applicationListeners>
     <actions>
         <action
                 id="StringReferences.EditorPopupMenu"
-                class="org.jetbrains.plugins.template.services.StringSymbolsAction"
+                class="com.github.noubair.stringsymbolsplugin.services.StringSymbolsAction"
                 text="Find String References"
                 description="Find string references">
             <add-to-group group-id="EditorPopupMenu" anchor="last"/>

@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.template.services
+package com.github.noubair.stringsymbolsplugin.services
 
 import com.intellij.find.FindManager
 import com.intellij.find.FindModel
