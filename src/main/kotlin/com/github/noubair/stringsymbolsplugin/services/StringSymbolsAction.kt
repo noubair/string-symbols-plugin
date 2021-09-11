@@ -2,21 +2,23 @@ package com.github.noubair.stringsymbolsplugin.services
 
 import com.intellij.codeInsight.navigation.NavigationUtil
 import com.intellij.ide.util.DefaultPsiElementCellRenderer
+import com.intellij.ide.util.PsiElementListCellRenderer
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.psi.JavaTokenType
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiJavaFile
-import com.intellij.psi.PsiManager
+import com.intellij.openapi.util.Iconable
+import com.intellij.psi.*
 import com.intellij.psi.impl.cache.CacheManager
+import com.intellij.psi.impl.source.PsiJavaFileImpl
 import com.intellij.psi.impl.source.tree.PsiPlainTextImpl
 import com.intellij.psi.impl.source.tree.java.PsiIdentifierImpl
 import com.intellij.psi.impl.source.tree.java.PsiJavaTokenImpl
+import com.intellij.psi.presentation.java.SymbolPresentationUtil
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.UsageSearchContext
+import com.intellij.psi.util.PsiTreeUtil
 
 class StringSymbolsAction : AnAction()  {
     override fun actionPerformed(e: AnActionEvent) {
@@ -59,11 +61,16 @@ class StringSymbolsAction : AnAction()  {
         val camelCaseClassName = classNameCandidate.split(" ").stream()
             .reduce { w1: String, w2: String -> w1.replaceFirstChar(Char::uppercase) + w2.replaceFirstChar(Char::uppercase) }
             .get()
-        val filesWithClassName: List<PsiJavaFile> = CacheManager.getInstance(element.project).getFilesWithWord(
+        val filesWithClassName: List<PsiElement> = CacheManager.getInstance(element.project).getFilesWithWord(
             camelCaseClassName, UsageSearchContext.IN_CODE,
             GlobalSearchScope.projectScope(element.project),
             true
-        ).map { psiFile -> psiFile as PsiJavaFile }
+        ).map { psiFile ->
+            (psiFile as PsiJavaFile).classes.filter { classNameCandidate ->
+                classNameCandidate.name.equals(camelCaseClassName)
+            }.get(0)
+        }
+
 
         NavigationUtil.getPsiElementPopup(
             filesWithClassName.toTypedArray(),
@@ -90,14 +97,14 @@ class StringSymbolsAction : AnAction()  {
             run {
                 var index = javaFile.text.indexOf(quotedMethodName);
                 while (index >= 0) {
-                    candidatePsiMethodInvocations.add(javaFile.findElementAt(index))
+                    candidatePsiMethodInvocations.add(javaFile.findElementAt(index)!!)
                     index = javaFile.text.indexOf(quotedMethodName, index + 1)
                 }
             }
         }
         NavigationUtil.getPsiElementPopup(
             candidatePsiMethodInvocations.toTypedArray(),
-            DefaultPsiElementCellRenderer(),
+            MethodStringInvocationsRenderer(),
             "Choose Definition"
         ).showInBestPositionFor(editor)
     }
@@ -142,3 +149,21 @@ class StringSymbolsAction : AnAction()  {
 }
 
 
+class MethodStringInvocationsRenderer : PsiElementListCellRenderer<PsiElement?>() {
+    override fun getIconFlags(): Int {
+        return Iconable.ICON_FLAG_VISIBILITY
+    }
+
+    override fun getElementText(element: PsiElement?): String {
+        return SymbolPresentationUtil.getSymbolPresentableText(element!!)
+    }
+
+    public override fun getContainerText(element: PsiElement?, name: String): String? {
+        val innerClass: PsiClass = PsiTreeUtil.getParentOfType(element, PsiClass::class.java)!!;
+        return "(in " + (innerClass.containingFile as PsiJavaFileImpl).packageName + "." + innerClass.name + ")";
+    }
+
+    companion object {
+        fun getFirstParentMethod() : Int = 1
+    }
+}
